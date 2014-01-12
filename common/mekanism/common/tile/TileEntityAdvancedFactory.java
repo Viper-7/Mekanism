@@ -1,6 +1,7 @@
 package mekanism.common.tile;
 
 import mekanism.api.EnumColor;
+import mekanism.api.ListUtils;
 import mekanism.common.SideData;
 import mekanism.common.Tier.FactoryTier;
 import mekanism.common.block.BlockMachine.MachineType;
@@ -20,6 +21,6 @@ public class TileEntityAdvancedFactory extends TileEntityFactory
 		sideOutputs.add(new SideData(EnumColor.DARK_RED, new int[] {5, 6, 7, 8, 9}));
 		sideOutputs.add(new SideData(EnumColor.DARK_BLUE, new int[] {10, 11, 12, 13, 14}));
 		
-		ejectorComponent = new TileComponentEjector(this, sideOutputs.get(5));
+		ejectorComponent = new TileComponentEjector(this, ListUtils.asList(sideOutputs.get(5)));
 	}
 }

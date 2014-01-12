@@ -1,10 +1,12 @@
 package mekanism.common.tile.component;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import mekanism.api.EnumColor;
 import mekanism.api.Coord4D;
+import mekanism.api.EnumColor;
 import mekanism.common.IEjector;
 import mekanism.common.IInvConfiguration;
 import mekanism.common.ILogisticalTransporter;
@@ -37,24 +39,28 @@ public class TileComponentEjector implements ITileComponent, IEjector
 	
 	public int tickDelay = 0;
 	
-	public SideData sideData;
+	public List<SideData> dataList;
 	
-	public int[] trackers;
+	public List<int[]> trackers = new ArrayList<int[]>();
 	
-	public TileComponentEjector(TileEntityContainerBlock tile, SideData data)
+	public TileComponentEjector(TileEntityContainerBlock tile, List<SideData> data)
 	{
 		tileEntity = tile;
-		sideData = data;
-		trackers = new int[sideData.availableSlots.length];
+		dataList = data;
+		
+		for(int i = 0; i < data.size(); i++)
+		{
+			trackers.add(i, new int[data.get(i).availableSlots.length]);
+		}
 		
 		tile.components.add(this);
 	}
 	
-	private List<ForgeDirection> getTrackedOutputs(int index, List<ForgeDirection> dirs)
+	private Set<ForgeDirection> getTrackedOutputs(int index, int dataIndex, Set<ForgeDirection> dirs)
 	{
-		List<ForgeDirection> sides = new ArrayList<ForgeDirection>();
+		Set<ForgeDirection> sides = new HashSet<ForgeDirection>();
 		
-		for(int i = trackers[index]+1; i <= trackers[index]+6; i++)
+		for(int i = trackers.get(dataIndex)[index]+1; i <= trackers.get(dataIndex)[index]+6; i++)
 		{
 			for(ForgeDirection side : dirs)
 			{
@@ -88,62 +94,65 @@ public class TileComponentEjector implements ITileComponent, IEjector
 			return;
 		}
 		
-		List<ForgeDirection> outputSides = new ArrayList<ForgeDirection>();
-		
 		IInvConfiguration configurable = (IInvConfiguration)tileEntity;
 		
-		for(int i = 0; i < configurable.getConfiguration().length; i++)
+		for(SideData sideData : dataList)
 		{
-			if(configurable.getConfiguration()[i] == configurable.getSideData().indexOf(sideData))
-			{
-				outputSides.add(ForgeDirection.getOrientation(MekanismUtils.getBaseOrientation(i, tileEntity.facing)));
-			}
-		}
-		
-		for(int index = 0; index < sideData.availableSlots.length; index++)
-		{
-			int slotID = sideData.availableSlots[index];
+			Set<ForgeDirection> outputSides = new HashSet<ForgeDirection>();
 			
-			if(tileEntity.inventory[slotID] == null)
+			for(int i = 0; i < configurable.getConfiguration().length; i++)
 			{
-				continue;
-			}
-			
-			ItemStack stack = tileEntity.inventory[slotID];
-			List<ForgeDirection> outputs = getTrackedOutputs(index, outputSides);
-			
-			for(ForgeDirection side : outputs)
-			{
-				TileEntity tile = Coord4D.get(tileEntity).getFromSide(side).getTileEntity(tileEntity.worldObj);
-				ItemStack prev = stack.copy();
-				
-				if(tile instanceof IInventory && !(tile instanceof ILogisticalTransporter))
+				if(configurable.getConfiguration()[i] == configurable.getSideData().indexOf(sideData))
 				{
-					stack = InventoryUtils.putStackInInventory((IInventory)tile, stack, side.ordinal(), false);
+					outputSides.add(ForgeDirection.getOrientation(MekanismUtils.getBaseOrientation(i, tileEntity.facing)));
 				}
-				else if(tile instanceof ILogisticalTransporter)
+			}
+			
+			for(int index = 0; index < sideData.availableSlots.length; index++)
+			{
+				int slotID = sideData.availableSlots[index];
+				
+				if(tileEntity.inventory[slotID] == null)
 				{
-					ItemStack rejects = TransporterUtils.insert(tileEntity, (ILogisticalTransporter)tile, stack, outputColor, true, 0);
+					continue;
+				}
+				
+				ItemStack stack = tileEntity.inventory[slotID];
+				Set<ForgeDirection> outputs = getTrackedOutputs(index, dataList.indexOf(sideData), outputSides);
+				
+				for(ForgeDirection side : outputs)
+				{
+					TileEntity tile = Coord4D.get(tileEntity).getFromSide(side).getTileEntity(tileEntity.worldObj);
+					ItemStack prev = stack.copy();
 					
-					if(TransporterManager.didEmit(stack, rejects))
+					if(tile instanceof IInventory && !(tile instanceof ILogisticalTransporter))
 					{
-						stack = rejects;
+						stack = InventoryUtils.putStackInInventory((IInventory)tile, stack, side.ordinal(), false);
+					}
+					else if(tile instanceof ILogisticalTransporter)
+					{
+						ItemStack rejects = TransporterUtils.insert(tileEntity, (ILogisticalTransporter)tile, stack, outputColor, true, 0);
+						
+						if(TransporterManager.didEmit(stack, rejects))
+						{
+							stack = rejects;
+						}
+					}
+					
+					if(stack == null || prev.stackSize != stack.stackSize)
+					{
+						trackers.get(dataList.indexOf(sideData))[index] = side.ordinal();
+					}
+					
+					if(stack == null)
+					{
+						break;
 					}
 				}
 				
-				if(stack == null || prev.stackSize != stack.stackSize)
-				{
-					trackers[index] = side.ordinal();
-				}
-				
-				if(stack == null)
-				{
-					break;
-				}
+				tileEntity.inventory[slotID] = stack;
+				tileEntity.onInventoryChanged();
 			}
-			
-			tileEntity.inventory[slotID] = stack;
-			tileEntity.onInventoryChanged();
 		}
 		
 		tickDelay = 20;
@@ -212,9 +221,9 @@ public class TileComponentEjector implements ITileComponent, IEjector
 			outputColor = TransporterUtils.colors.get(nbtTags.getInteger("ejectColor"));
 		}
 		
-		for(int i = 0; i < sideData.availableSlots.length; i++)
+		for(SideData data : dataList)
 		{
-			trackers[i] = nbtTags.getInteger("tracker" + i);
+			trackers.add(dataList.indexOf(data), nbtTags.getIntArray("tracker" + dataList.indexOf(data)));
 		}
 		
 		for(int i = 0; i < 6; i++)
@@ -275,9 +284,9 @@ public class TileComponentEjector implements ITileComponent, IEjector
 			nbtTags.setInteger("ejectColor", TransporterUtils.colors.indexOf(outputColor));
 		}
 		
-		for(int i = 0; i < sideData.availableSlots.length; i++)
+		for(SideData data : dataList)
 		{
-			nbtTags.setInteger("tracker" + i, trackers[i]);
+			nbtTags.setIntArray("tracker" + dataList.indexOf(data), trackers.get(dataList.indexOf(data)));
 		}
 		
 		for(int i = 0; i < 6; i++)

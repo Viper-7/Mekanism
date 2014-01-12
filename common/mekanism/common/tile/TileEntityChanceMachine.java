@@ -1,5 +1,7 @@
 package mekanism.common.tile;
 
+import java.util.Map;
+
 import mekanism.api.EnumColor;
 import mekanism.api.ListUtils;
 import mekanism.common.Mekanism;
@@ -15,20 +17,9 @@ import net.minecraft.util.ResourceLocation;
 import dan200.computer.api.IComputerAccess;
 import dan200.computer.api.ILuaContext;
 
-public abstract class TileEntityElectricMachine extends TileEntityBasicMachine
+public class TileEntityChanceMachine extends TileEntityBasicMachine
 {
-	/**
-	 * A simple electrical machine. This has 3 slots - the input slot (0), the energy slot (1), 
-	 * output slot (2), and the upgrade slot (3). It will not run if it does not have enough energy.
-	 * 
-	 * @param soundPath - location of the sound effect
-	 * @param name - full name of this machine
-	 * @param location - GUI texture path of this machine
-	 * @param perTick - energy used per tick.
-	 * @param ticksRequired - ticks required to operate -- or smelt an item.
-	 * @param maxEnergy - maximum energy this machine can hold.
-	 */
-	public TileEntityElectricMachine(String soundPath, String name, ResourceLocation location, double perTick, int ticksRequired, double maxEnergy)
+	public TileEntityChanceMachine(String soundPath, String name, ResourceLocation location, double perTick, int ticksRequired, double maxEnergy)
 	{
 		super(soundPath, name, location, perTick, ticksRequired, maxEnergy);
 		
@@ -37,13 +28,14 @@ public abstract class TileEntityElectricMachine extends TileEntityBasicMachine
 		sideOutputs.add(new SideData(EnumColor.DARK_GREEN, new int[] {1}));
 		sideOutputs.add(new SideData(EnumColor.DARK_BLUE, new int[] {2}));
 		sideOutputs.add(new SideData(EnumColor.ORANGE, new int[] {3}));
+		sideOutputs.add(new SideData(EnumColor.YELLOW, new int[] {4}));
 		
 		sideConfig = new byte[] {2, 1, 0, 0, 4, 3};
 		
-		inventory = new ItemStack[4];
+		inventory = new ItemStack[5];
 		
 		upgradeComponent = new TileComponentUpgrade(this, 3);
-		ejectorComponent = new TileComponentEjector(this, ListUtils.asList(sideOutputs.get(3)));
+		ejectorComponent = new TileComponentEjector(this, ListUtils.asList(sideOutputs.get(3), sideOutputs.get(5)));
 	}
 	
 	@Override
@@ -178,33 +170,20 @@ public abstract class TileEntityElectricMachine extends TileEntityBasicMachine
 	}
 
 	@Override
-	public String[] getMethodNames() 
+	public Map getRecipes()
 	{
-		return new String[] {"getStored", "getProgress", "isActive", "facing", "canOperate", "getMaxEnergy", "getEnergyNeeded"};
+		return null;
 	}
 
 	@Override
-	public Object[] callMethod(IComputerAccess computer, ILuaContext context, int method, Object[] arguments) throws Exception 
+	public String[] getMethodNames()
 	{
-		switch(method)
-		{
-			case 0:
-				return new Object[] {getEnergy()};
-			case 1:
-				return new Object[] {operatingTicks};
-			case 2:
-				return new Object[] {isActive};
-			case 3:
-				return new Object[] {facing};
-			case 4:
-				return new Object[] {canOperate()};
-			case 5:
-				return new Object[] {getMaxEnergy()};
-			case 6:
-				return new Object[] {getMaxEnergy()-getEnergy()};
-			default:
-				System.err.println("[Mekanism] Attempted to call unknown method with computer ID " + computer.getID());
-				return new Object[] {"Unknown command."};
-		}
+		return null;
+	}
+
+	@Override
+	public Object[] callMethod(IComputerAccess computer, ILuaContext context, int method, Object[] arguments) throws Exception
+	{
+		return null;
 	}
 }

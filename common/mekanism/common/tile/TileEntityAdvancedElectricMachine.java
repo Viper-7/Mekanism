@@ -3,6 +3,7 @@ package mekanism.common.tile;
 import java.util.ArrayList;
 
 import mekanism.api.EnumColor;
+import mekanism.api.ListUtils;
 import mekanism.common.Mekanism;
 import mekanism.common.SideData;
 import mekanism.common.recipe.RecipeHandler;
@@ -64,7 +65,7 @@ public abstract class TileEntityAdvancedElectricMachine extends TileEntityBasicM
 		MAX_SECONDARY_ENERGY = maxSecondaryEnergy;
 		
 		upgradeComponent = new TileComponentUpgrade(this, 4);
-		ejectorComponent = new TileComponentEjector(this, sideOutputs.get(3));
+		ejectorComponent = new TileComponentEjector(this, ListUtils.asList(sideOutputs.get(3)));
 	}
     
     /**

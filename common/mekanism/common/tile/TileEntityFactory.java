@@ -3,8 +3,9 @@ package mekanism.common.tile;
 import java.util.ArrayList;
 import java.util.List;
 
-import mekanism.api.EnumColor;
 import mekanism.api.Coord4D;
+import mekanism.api.EnumColor;
+import mekanism.api.ListUtils;
 import mekanism.api.gas.Gas;
 import mekanism.api.gas.GasRegistry;
 import mekanism.api.gas.GasStack;
@@ -104,7 +105,7 @@ public class TileEntityFactory extends TileEntityElectricBlock implements IPerip
 		sideOutputs.add(new SideData(EnumColor.DARK_RED, new int[] {5, 6, 7}));
 		sideOutputs.add(new SideData(EnumColor.DARK_BLUE, new int[] {8, 9, 10}));
 		
-		ejectorComponent = new TileComponentEjector(this, sideOutputs.get(5));
+		ejectorComponent = new TileComponentEjector(this, ListUtils.asList(sideOutputs.get(5)));
 	}
 	
 	public TileEntityFactory(FactoryTier type, MachineType machine)

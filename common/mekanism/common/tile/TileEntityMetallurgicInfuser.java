@@ -2,8 +2,9 @@ package mekanism.common.tile;
 
 import java.util.ArrayList;
 
-import mekanism.api.EnumColor;
 import mekanism.api.Coord4D;
+import mekanism.api.EnumColor;
+import mekanism.api.ListUtils;
 import mekanism.api.infuse.InfuseObject;
 import mekanism.api.infuse.InfuseRegistry;
 import mekanism.api.infuse.InfuseType;
@@ -93,7 +94,7 @@ public class TileEntityMetallurgicInfuser extends TileEntityElectricBlock implem
 		sideOutputs.add(new SideData(EnumColor.DARK_GREEN, new int[] {4}));
 		
 		inventory = new ItemStack[5];
-		ejectorComponent = new TileComponentEjector(this, sideOutputs.get(4));
+		ejectorComponent = new TileComponentEjector(this, ListUtils.asList(sideOutputs.get(4)));
 	}
 	
 	@Override
